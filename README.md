@@ -1,5 +1,31 @@
 # 将微信读书划线和笔记同步到Notion
 
+## 本 fork 的同步配置
+
+本 fork 已迁移到微信读书官方 API Key 网关（skill 1.0.5）。书架、独立笔记/划线库、阅读统计和热力图均使用 `WEREAD_API_KEY`，不再依赖网页 Cookie 或 CookieCloud。
+
+在本仓库 **Settings → Secrets and variables → Actions → Repository secrets** 配置：
+
+| Secret | 用途 |
+| --- | --- |
+| `WEREAD_API_KEY` | 从 [微信读书官方入口](https://weread.qq.com/r/weread-skills)获取，只保存在 Secrets |
+| `NOTION_TOKEN` | 已授权相关页面和数据库的 Notion integration token |
+| `NOTION_PAGE` | 包含书架、独立笔记、划线和统计数据库的总页面链接或 ID |
+| `NAME` | 热力图显示名称，可选 |
+
+注意：这里的 `NOTION_PAGE` 是 Pro 的总页面；不要套用新版普通版填写书架数据库 ID 的配置方式，也不要把 Cookie 填到这个 Secret。
+
+- `read time sync`：UTC 每 3 小时执行，北京时间 02:00、05:00、08:00、11:00、14:00、17:00、20:00、23:00。
+- `weread note sync`：每天北京时间 08:00 执行。
+- 两条写入任务串行排队；`schedule` 可能因 GitHub 队列延迟。
+- 日统计恢复范围为 2025 年起，热力图保留原年份起点并自动延伸到当年。日库的“时长”支持已有数字或文本类型。
+- 同步保留历史笔记和划线，不自动建库或修改字段结构；结构不匹配时明确停止。
+- `weread authentication diagnosis` 仅供手动只读检查，日志输出接口结构、独立库最新日期、今日时长是否匹配及热力图年份色块，不输出密钥和笔记正文。诊断脚本成功不代表最新日期已满足验收，应查看 `verification` 结果。
+
+Key 被撤销或失效时，在官方入口取得有效 Key 后更新 `WEREAD_API_KEY` 并重跑。服务端要求升级 skill 时，先核对官方文档，再更新 `scripts/gateway.py` 中的版本号。不要在聊天、代码或提交记录中粘贴密钥。
+
+以下保留原项目的介绍与链接。
+
 
 本项目通过Github Action每天定时同步微信读书划线到Notion。
 
