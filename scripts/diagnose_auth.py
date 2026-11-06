@@ -1,6 +1,7 @@
 """Read-only probes. Never print request headers, cookies or response contents."""
 
 import json
+from requests.cookies import RequestsCookieJar
 
 from weread_api import WeReadApi
 
@@ -12,10 +13,28 @@ if __name__ == "__main__":
         name: name in names for name in ("wr_vid", "wr_skey", "wr_rt")
     }}))
     api.session.headers.update({
-        "User-Agent": "Mozilla/5.0",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
         "Referer": "https://weread.qq.com/",
         "Origin": "https://weread.qq.com",
     })
+    # Domain-scoped cookies prevent stale unscoped duplicates after renewal.
+    jar = RequestsCookieJar()
+    for cookie in api.session.cookies:
+        jar.set(cookie.name, cookie.value, domain=".weread.qq.com", path="/")
+    api.session.cookies = jar
+    try:
+        response = api.session.post(
+            "https://weread.qq.com/web/login/renewal",
+            json={"rq": "%2Fweb%2Fbook%2Fread", "ql": False},
+            timeout=20,
+        )
+        data = response.json()
+        print(json.dumps({"probe": "web_renewal", "http_status": response.status_code,
+                          "renewed": data.get("succ") == 1,
+                          "error_code": data.get("errcode", data.get("errCode"))
+                          if isinstance(data.get("errcode", data.get("errCode")), (int, type(None))) else "non-numeric"}))
+    except Exception as error:
+        print(json.dumps({"probe": "web_renewal", "exception_type": type(error).__name__}))
     probes = [
         ("legacy_notebooks", "https://i.weread.qq.com/user/notebooks"),
         ("web_notebooks", "https://weread.qq.com/web/user/notebooks"),
