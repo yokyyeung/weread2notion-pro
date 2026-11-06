@@ -3,6 +3,7 @@
 import copy
 import importlib.metadata
 import os
+import runpy
 from pathlib import Path
 import sys
 import unittest
@@ -163,6 +164,18 @@ def history_row(item_id, block_id, id_property):
 
 
 class HistoryPreservationTests(unittest.TestCase):
+    def test_shared_shelf_sort_does_not_skip_independent_notes(self):
+        helper = Mock()
+        helper.get_all_book.return_value = {"book-id": {"pageId": "book-page", "Sort": 42}}
+        api = Mock()
+        api.get_notebooklist.return_value = [{"bookId": "book-id", "book": {"title": "Offline book"}, "sort": 42}]
+        api.get_chapter_info.side_effect = RuntimeError("entered-independent-note-sync")
+        with patch.dict(os.environ, {"REF": "refs/heads/main", "REPOSITORY": "offline/repo"}, clear=True), patch("sys.argv", ["weread.py"]), patch("notion_helper.NotionHelper", return_value=helper), patch("weread_api.WeReadApi", return_value=api):
+            with self.assertRaisesRegex(RuntimeError, "entered-independent-note-sync"):
+                runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/weread.py"), run_name="__main__")
+        api.get_chapter_info.assert_called_once_with("book-id")
+        helper.delete_block.assert_not_called()
+
     def check_remote_notes(self, function_name, id_property, database_attribute):
         for incoming in [[], [{id_property: "keep"}, {id_property: "new"}]]:
             with self.subTest(incoming=incoming):
