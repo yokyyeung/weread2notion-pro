@@ -64,7 +64,7 @@ def insert_book_to_notion(books, index, bookId):
     status = "想读"
     if markedStatus == 4:
         status = "已读"
-    elif book.get("readingTime", 0) >= 60:
+    elif markedStatus == 2 or (book.get("readingTime") or 0) >= 60:
         status = "在读"
     book["阅读状态"] = status
     book["阅读时长"] = book.get("readingTime")
@@ -84,8 +84,8 @@ def insert_book_to_notion(books, index, bookId):
     book["时间"] = date
     book["开始阅读时间"] = book.get("beginReadingDate")
     book["最后阅读时间"] = book.get("lastReadingDate")
-    cover = book.get("cover").replace("/s_", "/t7_")
-    if not cover and not cover.strip() and not cover.startswith("http"):
+    cover = (book.get("cover") or "").replace("/s_", "/t7_")
+    if not cover.startswith("http"):
         cover = BOOK_ICON_URL
     if bookId not in notion_books:
         isbn = book.get("isbn")
@@ -191,10 +191,9 @@ if __name__ == "__main__":
     notion_helper = NotionHelper()
     notion_books = notion_helper.get_all_book()
     bookshelf_books = weread_api.get_bookshelf()
-    bookProgress = bookshelf_books.get("bookProgress")
-    bookProgress = {book.get("bookId"): book for book in bookProgress}
+    shelf_books = {book["bookId"]: book for book in bookshelf_books["books"]}
     archive_dict = {}
-    for archive in bookshelf_books.get("archive"):
+    for archive in bookshelf_books.get("archive", []):
         name = archive.get("name")
         bookIds = archive.get("bookIds")
         archive_dict.update({bookId: name for bookId in bookIds})
@@ -202,8 +201,8 @@ if __name__ == "__main__":
     for key, value in notion_books.items():
         if (
             (
-                key not in bookProgress
-                or value.get("readingTime") == bookProgress.get(key).get("readingTime")
+                key not in shelf_books
+                or (value.get("lastReadingDate") or 0) >= (shelf_books[key].get("readUpdateTime") or 0)
             )
             and (archive_dict.get(key) == value.get("category"))
             and (value.get("cover") is not None)
@@ -217,6 +216,6 @@ if __name__ == "__main__":
     notebooks = [d["bookId"] for d in notebooks if "bookId" in d]
     books = bookshelf_books.get("books")
     books = [d["bookId"] for d in books if "bookId" in d]
-    books = list((set(notebooks) | set(books)) - set(not_need_sync))
+    books = sorted((set(notebooks) | set(books)) - set(not_need_sync))
     for index, bookId in enumerate(books):
         insert_book_to_notion(books, index, bookId)

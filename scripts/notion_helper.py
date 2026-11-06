@@ -398,6 +398,9 @@ class NotionHelper:
                 "readingTime": get_property_value(
                     result.get("properties").get("阅读时长")
                 ),
+                "lastReadingDate": get_property_value(
+                    result.get("properties").get("最后阅读时间")
+                ),
                 "category": get_property_value(
                     result.get("properties").get("书架分类")
                 ),

@@ -14,6 +14,7 @@ jobs:
     name: Sync
     runs-on: ubuntu-latest
     env:
+      WEREAD_API_KEY: ${{ secrets.WEREAD_API_KEY }}
       NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
       NOTION_PAGE: ${{ secrets.NOTION_PAGE }}
       WEREAD_COOKIE: ${{ secrets.WEREAD_COOKIE }}

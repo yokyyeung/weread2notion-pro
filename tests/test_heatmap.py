@@ -25,7 +25,7 @@ class HeatmapTests(unittest.TestCase):
         api = Mock()
         api.get_api_data.return_value = {"errcode": -2010}
         with patch("heatmap.subprocess.run") as run:
-            with self.assertRaisesRegex(RuntimeError, "WEREAD_COOKIE"):
+            with self.assertRaisesRegex(RuntimeError, "WEREAD_API_KEY"):
                 generate_heatmap(api, [])
             run.assert_not_called()
 

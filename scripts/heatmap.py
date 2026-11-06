@@ -1,4 +1,4 @@
-"""Use the existing Cookie API with github-heatmap's JSON renderer."""
+"""Render daily WeRead Gateway data using github-heatmap's JSON renderer."""
 
 import json
 import os
@@ -25,7 +25,7 @@ def heatmap_years(configured, current_year):
 def generate_heatmap(api, arguments):
     data = api.get_api_data()
     if not isinstance(data.get("readTimes"), dict) or data.get("errcode", 0):
-        raise RuntimeError("微信读书未返回阅读记录；请在 GitHub Secrets 更新 WEREAD_COOKIE。")
+        raise RuntimeError("微信读书未返回阅读记录；请检查 WEREAD_API_KEY 和接口响应。")
     tracks = {
         pendulum.from_timestamp(int(timestamp), tz="Asia/Shanghai").to_date_string():
         round(duration / 60.0, 2)
