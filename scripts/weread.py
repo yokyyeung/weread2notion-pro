@@ -262,8 +262,8 @@ if __name__ == "__main__":
             sort = book.get("sort")
             if bookId not in notion_books:
                 continue
-            if sort == notion_books.get(bookId).get("Sort"):
-                continue
+            # 主仓库也更新书架的 Sort，不能据此判断 Pro 独立笔记库已同步。
+            # 下方按已有 bookmarkId/reviewId 复用正文和数据库记录。
             pageId = notion_books.get(bookId).get("pageId")
             print(f"正在同步《{title}》,一共{len(books)}本，当前是第{index+1}本。")
             chapter = weread_api.get_chapter_info(bookId)

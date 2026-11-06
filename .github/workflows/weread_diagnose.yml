@@ -20,3 +20,9 @@ jobs:
         env:
           WEREAD_API_KEY: ${{ secrets.WEREAD_API_KEY }}
         run: python scripts/probe_gateway.py
+      - name: Verify live Notion dates and heatmap
+        env:
+          WEREAD_API_KEY: ${{ secrets.WEREAD_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_PAGE: ${{ secrets.NOTION_PAGE }}
+        run: python scripts/verify_sync.py
