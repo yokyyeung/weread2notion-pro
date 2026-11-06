@@ -10,6 +10,7 @@ import requests
 from gateway import GatewayClient
 from notion_helper import NotionHelper
 from read_time import duration_seconds
+from weread_api import WeReadApi
 
 
 if __name__ == "__main__":
@@ -55,3 +56,24 @@ if __name__ == "__main__":
                       "svg_file": parsed.path.rsplit("/", 1)[-1],
                       "reading_cells_2025": sum(title.startswith("2025-") and len(title) > 10 for title in titles),
                       "reading_cells_2026": sum(title.startswith("2026-") and len(title) > 10 for title in titles)}))
+
+    # Latest dates alone cannot distinguish a stale sync from no new source data.
+    api = WeReadApi()
+    source_ids = set()
+    latest = None
+    for book in api.get_notebooklist():
+        for note in api.get_bookmark_list(book["bookId"]):
+            source_ids.add(str(note["bookmarkId"]))
+            if note.get("createTime"):
+                latest = max(latest or 0, int(note["createTime"]))
+    notion_ids = set()
+    for row in helper.query_all(helper.bookmark_database_id):
+        value = "".join(part.get("plain_text", "") for part in row["properties"]["bookmarkId"]["rich_text"])
+        if value:
+            notion_ids.add(value)
+    missing = source_ids - notion_ids
+    print(json.dumps({"verification": "highlight_source_coverage",
+                      "source_highlights": len(source_ids), "missing_in_notion": len(missing),
+                      "source_latest_date": pendulum.from_timestamp(latest, tz="Asia/Shanghai").to_date_string() if latest else None}))
+    if missing:
+        raise RuntimeError("存在尚未同步到独立数据库的划线；未完成验收。")
