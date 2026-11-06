@@ -9,6 +9,7 @@ import requests
 
 from gateway import GatewayClient
 from notion_helper import NotionHelper
+from read_time import duration_seconds
 
 
 if __name__ == "__main__":
@@ -37,7 +38,7 @@ if __name__ == "__main__":
                         filter={"property": "时间戳", "number": {"equals": today.int_timestamp}})["results"]
     print(json.dumps({"verification": "today_duration", "date": today.to_date_string(),
                       "matching_rows": len(rows),
-                      "matches_source": len(rows) == 1 and rows[0]["properties"]["时长"].get("number") == expected}))
+                      "matches_source": len(rows) == 1 and duration_seconds(rows[0]["properties"]["时长"]) == expected}))
 
     if not helper.heatmap_block_id:
         raise RuntimeError("未找到 Notion 热力图嵌入块。")

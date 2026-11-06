@@ -5,7 +5,7 @@ import time
 
 from notion_client import Client
 from retrying import retry
-from datetime import timedelta
+from datetime import timedelta, timezone
 from dotenv import load_dotenv
 from utils import (
     format_date,
@@ -236,10 +236,10 @@ class NotionHelper:
 
     def get_day_relation_id(self, date):
         new_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
-        timestamp = (new_date - timedelta(hours=8)).timestamp()
+        timestamp = int(new_date.replace(tzinfo=timezone(timedelta(hours=8))).timestamp())
         day = new_date.strftime("%Y年%m月%d日")
         properties = {
-            "日期": get_date(format_date(date)),
+            "日期": get_date(format_date(new_date)),
             "时间戳": get_number(timestamp),
         }
         properties["年"] = get_relation(
