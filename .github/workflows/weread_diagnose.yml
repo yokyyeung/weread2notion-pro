@@ -6,6 +6,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.repository }}-notion-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   diagnose:
     runs-on: ubuntu-latest

@@ -3,7 +3,7 @@ import os
 import re
 import time
 
-from notion_client import Client
+from notion_client_compat import Client
 from retrying import retry
 from datetime import timedelta, timezone
 from dotenv import load_dotenv

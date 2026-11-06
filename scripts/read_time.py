@@ -132,6 +132,9 @@ if __name__ == "__main__":
         raise RuntimeError(f"更新热力图失败，没有生成热力图。具体参考：{HEATMAP_GUIDE}")
     api_data = weread_api.get_api_data()
     readTimes = {int(key): value for key, value in api_data.get("readTimes").items()}
+    # 本次恢复补写 2025 年起的记录，保留停更前的历史行和原值。
+    recovery_start = pendulum.datetime(2025, 1, 1, tz="Asia/Shanghai").int_timestamp
+    readTimes = {key: value for key, value in readTimes.items() if key >= recovery_start}
     now = pendulum.now("Asia/Shanghai").start_of("day")
     today_timestamp = now.int_timestamp
     if today_timestamp not in readTimes:
@@ -143,6 +146,8 @@ if __name__ == "__main__":
         date = (result["properties"]["日期"].get("date") or {}).get("start")
         timestamp = (pendulum.parse(date, tz="Asia/Shanghai").in_timezone("Asia/Shanghai").start_of("day").int_timestamp
                      if date else stored_timestamp)
+        if timestamp is None or timestamp < recovery_start:
+            continue
         duration = duration_seconds(result["properties"]["时长"])
         id = result.get("id")
         if timestamp in readTimes:
