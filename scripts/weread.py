@@ -33,14 +33,11 @@ def get_bookmark_list(page_id, bookId):
         )
         for x in results
     }
-    dict2 = {get_rich_text_from_result(x, "blockId"): x.get("id") for x in results}
     bookmarks = weread_api.get_bookmark_list(bookId)
     for i in bookmarks:
         if i.get("bookmarkId") in dict1:
             i["blockId"] = dict1.pop(i.get("bookmarkId"))
-    for blockId in dict1.values():
-        notion_helper.delete_block(blockId)
-        notion_helper.delete_block(dict2.get(blockId))
+    # 保留微信读书本次响应中没有返回的历史划线及其正文。
     return bookmarks
 
 
@@ -59,14 +56,11 @@ def get_review_list(page_id,bookId):
         )
         for x in results
     }
-    dict2 = {get_rich_text_from_result(x, "blockId"): x.get("id") for x in results}
     reviews = weread_api.get_review_list(bookId)
     for i in reviews:
         if i.get("reviewId") in dict1:
             i["blockId"] = dict1.pop(i.get("reviewId"))
-    for blockId in dict1.values():
-        notion_helper.delete_block(blockId)
-        notion_helper.delete_block(dict2.get(blockId))
+    # 保留微信读书本次响应中没有返回的历史笔记及其正文。
     return reviews
 
 
@@ -150,7 +144,6 @@ def sort_notes(page_id, chapter, bookmark_list):
             )
             for x in results
         }
-        dict2 = {get_rich_text_from_result(x, "blockId"): x.get("id") for x in results}
         d = {}
         for data in bookmark_list:
             chapterUid = data.get("chapterUid", 1)
@@ -163,9 +156,7 @@ def sort_notes(page_id, chapter, bookmark_list):
                     chapter.get(key)["blockId"] = dict1.pop(key)
                 notes.append(chapter.get(key))
             notes.extend(value)
-        for blockId in dict1.values():
-            notion_helper.delete_block(blockId)
-            notion_helper.delete_block(dict2.get(blockId))
+        # 章节暂时没有笔记时也保留原有章节记录和正文。
     else:
         notes.extend(bookmark_list)
     return notes

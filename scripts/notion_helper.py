@@ -40,7 +40,11 @@ class NotionHelper:
     property_dict = {}
 
     def __init__(self):
-        self.client = Client(auth=os.getenv("NOTION_TOKEN"), log_level=logging.ERROR)
+        self.client = Client(
+            auth=os.getenv("NOTION_TOKEN"),
+            notion_version="2022-06-28",
+            log_level=logging.ERROR,
+        )
         self.__cache = {}
         self.page_id = self.extract_page_id(os.getenv("NOTION_PAGE"))
         self.search_database(self.page_id)
@@ -95,7 +99,7 @@ class NotionHelper:
             )
         self.update_book_database()
         if self.read_database_id is None:
-            self.create_database()
+            raise RuntimeError("缺少阅读记录数据库；为保留现有结构，同步已停止。")
 
     def get_relation_database_id(self, property):
         return property.get("relation").get("database_id")
@@ -132,7 +136,7 @@ class NotionHelper:
                 self.search_database(child["id"])
 
     def update_book_database(self):
-        """更新数据库"""
+        """检查现有数据库；同步不得自动修改数据库结构。"""
         response = self.client.databases.retrieve(database_id=self.book_database_id)
         id = response.get("id")
         properties = response.get("properties")
@@ -166,7 +170,10 @@ class NotionHelper:
         # if properties.get("NeoDB链接") is None or properties.get("NeoDB链接").get("type") != "url":
         #     update_properties["NeoDB链接"] = {"url": {}}
         if len(update_properties) > 0:
-            self.client.databases.update(database_id=id, properties=update_properties)
+            raise RuntimeError(
+                "书架数据库属性缺失或类型不匹配；为保留现有结构，同步已停止："
+                + "、".join(update_properties)
+            )
 
     def create_database(self):
         title = [
